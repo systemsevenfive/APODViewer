@@ -49,15 +49,15 @@ class ViewController: UIViewController {
     
     @IBAction func fetchJSON(_ sender: Any) {
         let formatter = DateFormatter()
-        formatter.dateFormat = "YYYY-MM-DD"
+        formatter.dateFormat = "YYYY-MM-dd"
         urlString = "https://api.nasa.gov/planetary/apod?api_key=eFD5a3bZunHhZA6ZYEWDOItOZgE3uD7dJncUgor1&date=\(formatter.string(from: datePicker.date))"
         guard let url = URL(string: urlString) else { return }
         dataTask?.cancel()
         dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
-//            if let error = error {
-//                self.presentError(error: error)
-//            }
-            // Need to figure out how to trigger an error from this API
+            if let error = error {
+                print("2a. \(error)")
+            } //Is this the right way? We don't seem to be getting anything yet.
+            
             guard let data = data else { return }
             if let decodedData = try? JSONDecoder().decode(NasaJson.self, from: data) {
                 DispatchQueue.main.async {
