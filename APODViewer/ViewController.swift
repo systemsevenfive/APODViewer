@@ -20,7 +20,8 @@ class ViewController: UIViewController {
     @IBOutlet weak var datePicker: UIDatePicker!
     
     private var urlString = ""
-    private var dataTask: URLSessionDataTask?
+    private var dataTask: URLSessionDataTask? // Storing this one so we can cancel it if another date is selected.
+    
     private var nasaJson: NasaJson? {
         didSet {
             guard let nasaJson = nasaJson else { return }
@@ -28,7 +29,7 @@ class ViewController: UIViewController {
             imageURLString = nasaJson.url
         }
     }
-    private var imageURLString : String? {
+    private var imageURLString : String? { // Is this overbuilt?
         didSet {
             guard let imageURLString = imageURLString, let url = URL(string: imageURLString) else { return }
             let imageDataTask = URLSession.shared.dataTask(with: url) { data, response, error in
@@ -44,17 +45,19 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         descriptionLabel.numberOfLines = 0
-        // Do any additional setup after loading the view.
     }
     
     @IBAction func fetchJSON(_ sender: Any) {
         let formatter = DateFormatter()
         formatter.dateFormat = "YYYY-MM-DD"
-        let dateString = formatter.string(from: datePicker.date)
-        urlString = "https://api.nasa.gov/planetary/apod?api_key=eFD5a3bZunHhZA6ZYEWDOItOZgE3uD7dJncUgor1&date=\(dateString)"
+        urlString = "https://api.nasa.gov/planetary/apod?api_key=eFD5a3bZunHhZA6ZYEWDOItOZgE3uD7dJncUgor1&date=\(formatter.string(from: datePicker.date))"
         guard let url = URL(string: urlString) else { return }
         dataTask?.cancel()
         dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
+//            if let error = error {
+//                self.presentError(error: error)
+//            }
+            // Need to figure out how to trigger an error from this API
             guard let data = data else { return }
             if let decodedData = try? JSONDecoder().decode(NasaJson.self, from: data) {
                 DispatchQueue.main.async {
@@ -63,6 +66,12 @@ class ViewController: UIViewController {
             }
         }
         dataTask?.resume()
+    }
+    
+    func presentError(error: Error) {
+        let ac = UIAlertController(title: "Error", message: "An error occurred. \(error)", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "Ok", style: .default))
+        present(ac, animated: true)
     }
     
 
